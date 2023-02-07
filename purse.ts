@@ -1,12 +1,14 @@
 import 'isomorphic-fetch';
 import * as createError from "http-errors";
 
+const API = 'https://shruggr.cloud/api';
+
 export class Purse {
-    constructor(public api: string, private apiKey: string, private doBroadcast = true) {}
+    constructor(private apiKey: string, public debug = false) {}
 
     async pay (rawtx: string): Promise<string> {
-        console.log('PAY:', rawtx);
-        const ret = await fetch(`${this.api}/pay`, {
+        if(this.debug) console.log('PAY:', rawtx);
+        const ret = await fetch(`${API}/pay`, {
             method: 'POST',
             headers: {
                 authorization: this.apiKey,
@@ -19,23 +21,6 @@ export class Purse {
             throw createError(ret.status, await ret.text())
         }
         const b64 = await ret.text();
-        console.log("RET:", b64);
-        const payedTx = Buffer.from(b64, 'base64').toString('hex');
-
-        return payedTx;
-    }
-
-    async broadcast(rawtx: string) {
-        if(!this.doBroadcast) return;
-        const ret = await fetch(`${this.api}/broadcast`, {
-            method: 'POST',
-            headers: {
-                authorization: this.apiKey,
-                "content-type": "application/json"
-            },
-            body: JSON.stringify({rawtx: Buffer.from(rawtx, 'hex').toString('base64')}),
-        });
-
-        return ret.text();
+        return Buffer.from(b64, 'base64').toString('hex');
     }
 }

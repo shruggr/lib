@@ -3,15 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Purse = void 0;
 require("isomorphic-fetch");
 const createError = require("http-errors");
+const API = 'https://shruggr.cloud/api';
 class Purse {
-    constructor(api, apiKey, doBroadcast = true) {
-        this.api = api;
+    constructor(apiKey, debug = false) {
         this.apiKey = apiKey;
-        this.doBroadcast = doBroadcast;
+        this.debug = debug;
     }
     async pay(rawtx) {
-        console.log('PAY:', rawtx);
-        const ret = await fetch(`${this.api}/pay`, {
+        if (this.debug)
+            console.log('PAY:', rawtx);
+        const ret = await fetch(`${API}/pay`, {
             method: 'POST',
             headers: {
                 authorization: this.apiKey,
@@ -23,22 +24,7 @@ class Purse {
             throw createError(ret.status, await ret.text());
         }
         const b64 = await ret.text();
-        console.log("RET:", b64);
-        const payedTx = Buffer.from(b64, 'base64').toString('hex');
-        return payedTx;
-    }
-    async broadcast(rawtx) {
-        if (!this.doBroadcast)
-            return;
-        const ret = await fetch(`${this.api}/broadcast`, {
-            method: 'POST',
-            headers: {
-                authorization: this.apiKey,
-                "content-type": "application/json"
-            },
-            body: JSON.stringify({ rawtx: Buffer.from(rawtx, 'hex').toString('base64') }),
-        });
-        return ret.text();
+        return Buffer.from(b64, 'base64').toString('hex');
     }
 }
 exports.Purse = Purse;
